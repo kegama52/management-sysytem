@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tiisgs-db
+    environment:
+      POSTGRES_DB: tiisgs_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Treasury2024!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tiisgs-backend
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:Treasury2024!@postgres:5432/tiisgs_db
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    container_name: tiisgs-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

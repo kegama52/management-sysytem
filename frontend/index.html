@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Treasury ICT Support System</title>
+    <script>
+      // Global error handler to debug blank page
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error('Global error:', message, 'at', source, ':', lineno);
+        document.body.innerHTML = '<div style="padding:20px;color:red;font-family:monospace;"><h1>JavaScript Error</h1><p>' + message + '</p><p>' + source + ':' + lineno + ':' + colno + '</p><pre>' + (error && error.stack) + '</pre></div>';
+        return true;
+      };
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled promise rejection:', event.reason);
+        document.body.innerHTML = '<div style="padding:20px;color:red;font-family:monospace;"><h1>Unhandled Promise Rejection</h1><pre>' + event.reason + '</pre></div>';
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
