@@ -647,25 +647,23 @@ DECLARE
 BEGIN
     -- Get SLA minutes from ticket category
     SELECT sla_minutes INTO category_sla
-    FROM ticket_categories tc
-    JOIN tickets t ON tc.id = tc.id
-    WHERE t.id = NEW.id;
+    FROM ticket_categories
+    WHERE id = NEW.category_id;
 
     IF category_sla IS NULL THEN
         RETURN NEW;
     END IF;
 
-    -- Set SLA commitment and deadline on creation or category change
-    IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.category_id != NEW.category_id) THEN
+    -- Set SLA commitment and deadline on creation
+    IF TG_OP = 'INSERT' THEN
         NEW.sla_commitment_minutes = category_sla;
         NEW.sla_breach_at = NEW.created_at + (category_sla * INTERVAL '1 minute');
     END IF;
 
     -- Check for breach if status changes to resolved/closed
-    IF (TG_OP = 'UPDATE' AND OLD.status != NEW.status AND NEW.status IN ('resolved', 'closed')) THEN
+    IF TG_OP = 'UPDATE' AND OLD.status != NEW.status AND NEW.status IN ('resolved', 'closed') THEN
         IF NEW.resolved_at > NEW.sla_breach_at THEN
             NEW.sla_breached = TRUE;
-            -- Could insert notification here via separate function
         END IF;
     END IF;
 
