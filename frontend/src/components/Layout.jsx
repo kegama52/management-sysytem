@@ -25,6 +25,7 @@ export default function Layout() {
     { name: 'My Tickets', href: '/tickets', icon: ClipboardDocumentListIcon },
     { name: 'New Ticket', href: '/tickets/new', icon: PlusIcon },
     { name: 'Knowledge Base', href: '/knowledge-base', icon: BookOpenIcon },
+    { name: 'AI Assistant', href: '/ai-assistant', icon: ChatBubbleLeftRightIcon },
   ]
 
   const ictNavigation = [

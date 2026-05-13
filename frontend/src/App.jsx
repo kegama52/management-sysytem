@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { VoiceProvider } from './context/VoiceContext'
 
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -12,6 +13,7 @@ import NewTicket from './pages/NewTicket'
 import KnowledgeBase from './pages/KnowledgeBase'
 import Assets from './pages/Assets'
 import ICTQueue from './pages/ICTQueue'
+import AIAssistant from './pages/AIAssistant'
 import Layout from './components/Layout'
 
 const queryClient = new QueryClient()
@@ -38,25 +40,27 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Toaster position="top-right" />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="tickets" element={<TicketList />} />
-              <Route path="tickets/new" element={<NewTicket />} />
+        <VoiceProvider>
+          <BrowserRouter>
+            <Toaster position="top-right" />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="tickets" element={<TicketList />} />
+                <Route path="tickets/new" element={<NewTicket />} />
               <Route path="tickets/:id" element={<TicketDetail />} />
               <Route path="knowledge-base" element={<KnowledgeBase />} />
+              <Route path="ai-assistant" element={<AIAssistant />} />
               <Route
                 path="ict-queue"
                 element={
@@ -64,19 +68,20 @@ function App() {
                     <ICTQueue />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="assets"
-                element={
-                  <ProtectedRoute roles={['ict_officer', 'ict_supervisor', 'admin', 'auditor']}>
-                    <Assets />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </BrowserRouter>
+                />
+                <Route
+                  path="assets"
+                  element={
+                    <ProtectedRoute roles={['ict_officer', 'ict_supervisor', 'admin', 'auditor']}>
+                      <Assets />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </VoiceProvider>
       </AuthProvider>
     </QueryClientProvider>
   )
