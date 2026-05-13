@@ -117,6 +117,63 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
     }
   };
 
+  const requestPermission = async () => {
+    try {
+      // Check if we're in a secure context (HTTPS or localhost)
+      if (!window.isSecureContext && location.hostname !== 'localhost') {
+        setError('⚠️ Microphone requires HTTPS or localhost.\n\nYou are currently on: ' + window.location.origin + '\n\nIn production, TIISGS must be served over HTTPS for voice features to work.');
+        return;
+      }
+
+      // Check if browser supports getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('❌ Your browser does not support microphone access.\n\nPlease use:\n• Chrome 25+\n• Edge 79+\n• Safari 14+\n• Firefox 36+');
+        return;
+      }
+
+      // Request permission explicitly
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 16000
+        }
+      });
+
+      // Clean up the test stream - we'll request properly in startListening
+      stream.getTracks().forEach(track => track.stop());
+
+      // Permission granted - start listening
+      startListening();
+    } catch (err) {
+      console.error('Microphone permission error:', err);
+      let msg = '❌ Failed to access microphone.\n\n';
+
+      switch (err.name) {
+        case 'NotAllowedError':
+        case 'PermissionDeniedError':
+          msg += 'You blocked microphone access.\n\n📌 HOW TO FIX:\n1. Click the 🔒 (lock) icon in browser address bar\n2. Find "Microphone" permission\n3. Change from "Block" to "Allow"\n4. Refresh this page\n5. Click the microphone button again';
+          break;
+        case 'NotFoundError':
+          msg += 'No microphone detected.\n\n✓ Check if your mic is plugged in\n✓ Check Windows/Mac sound settings\n✓ Try a different browser';
+          break;
+        case 'NotReadableError':
+          msg += 'Microphone is already in use.\n\n✓ Close Zoom, Teams, Discord, or other apps using mic\n✓ Refresh this page and try again';
+          break;
+        case 'OverconstrainedError':
+          msg += 'Your microphone does not meet requirements.\n\nTry:\n• Use a different microphone\n• Use headphones with built-in mic';
+          break;
+        case 'SecurityError':
+          msg += 'Security error. Microphone access blocked.\n\n✓ Use HTTPS or localhost\n✓ Check browser security settings';
+          break;
+        default:
+          msg += `Error: ${err.name}\n${err.message}`;
+      }
+
+      setError(msg);
+    }
+  };
+
   const handleSpeakerClick = () => {
     if (isSpeaking) {
       cancelSpeech();
@@ -211,15 +268,30 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
 
       {/* Error Message */}
       {error && (
-        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700 flex items-center gap-2">
-          <span className="text-lg">⚠️</span>
-          {error}
-          <button
-            onClick={() => setError(null)}
-            className="ml-auto text-red-500 hover:text-red-700"
-          >
-            ×
-          </button>
+        <div className="mb-2 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          <div className="flex items-start gap-2">
+            <span className="text-lg flex-shrink-0">⚠️</span>
+            <div className="flex-1 whitespace-pre-line">{error}</div>
+            <button
+              onClick={requestPermission}
+              className="ml-2 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors flex-shrink-0"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Microphone Blocked Help */}
+      {error && (error.includes('denied') || error.includes('allow')) && (
+        <div className="mb-2 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+          <strong>Quick fix:</strong>
+          <ol className="list-decimal list-inside mt-1 space-y-1">
+            <li>Click the 🔒 (lock) icon left of the URL in your browser</li>
+            <li>Find "Microphone" in the dropdown</li>
+            <li>Change from "Block" to "Allow"</li>
+            <li>Refresh the page and try again</li>
+          </ol>
         </div>
       )}
 
