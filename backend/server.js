@@ -78,6 +78,16 @@ app.use('/api/assets', requireDB, assetRoutes);
 app.use('/api/ai', requireDB, aikbRoutes);
 app.use('/api/reports', requireDB, reportRoutes);
 
+// Start SLA monitoring cron (runs hourly by default)
+// Set RUN_SLA_MONITOR=false to disable in development
+if (process.env.RUN_SLA_MONITOR !== 'false') {
+  try {
+    require('./cron-sla');
+  } catch (err) {
+    console.error('Failed to start SLA monitor:', err.message);
+  }
+}
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal server error' });
