@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Footer from './Footer'
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -34,12 +35,12 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
+      <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg flex flex-col">
         <div className="flex h-16 items-center justify-center border-b border-gray-200">
           <h1 className="text-lg font-bold text-blue-600">TIISGS</h1>
         </div>
 
-        <nav className="mt-6 px-4">
+        <nav className="mt-6 px-4 flex-1">
           <div className="space-y-1">
             {navigation.map((item) => (
               <NavLink
@@ -86,7 +87,7 @@ export default function Layout() {
           )}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 p-4">
           <div className="mb-2 px-3">
             <p className="text-sm font-medium text-gray-900">
               {user?.firstName} {user?.lastName}
@@ -105,8 +106,11 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="ml-64 p-8">
-        <Outlet />
+      <main className="ml-64 p-8 flex flex-col min-h-screen">
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <Footer />
       </main>
     </div>
   )

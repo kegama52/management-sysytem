@@ -115,27 +115,84 @@ Open http://localhost:3000
 
 ## Treasury Organizational Structure
 
-The system comes pre-configured with Kenya National Treasury hierarchy:
+The system reflects the official **6 Directorates** under the National Treasury (per treasury.go.ke organogram):
 
 ```
-National Treasury
-├── Administrative Services (ABS)
-│   ├── ICT Department (ICTD)
-│   │   ├── ICT Support Unit (ICTSU)
-│   │   └── ICT Systems Dev (ICTSD)
+Office of the Principal Secretary
+├── Directorate of Public Debt Management (PDM)
+│   └── Debt Management Department (DEB)
+├── Directorate of Portfolio Management (PORT)
+│   └── Portfolio Management (PMG)
+├── Directorate of Accounting Services & Quality Assurance (ASQA)
+│   ├── IFMIS Operations Department
+│   ├── Accounting Services (ACC)
+│   └── Quality Assurance Unit (QA)
+├── Directorate of Budget, Fiscal & Economic Affairs (BUD)
+│   ├── Budget & Fiscal Affairs (BFA)
+│   └── Fiscal Policy Unit (FISC)
+├── Directorate of Administrative & Support Services (ADMIN)
+│   ├── ICT Department (ICTD) ← ICT Support Unit (ICTSU) reports here
 │   ├── Human Resources (HRD)
 │   └── Procurement (PROC)
-├── Budget, Fiscal & Economic Affairs (BUD)
-│   ├── Budget Unit (BUDU)
-│   └── Fiscal Policy Unit (FISCU)
-├── Public Debt Management (PDM)
-│   └── Debt Recording Unit (DEBU)
-├── Government Financial Services (GFS)
-├── Public-Private Partnerships (PPP)
-└── Internal Audit (AUD)
+└── Directorate of Public Private Partnerships (PPP)
+    └── PPP Department (PPPD)
 ```
 
-## User Roles
+> **Note:** All directorates fall under the **Office of the Treasury**, led by the Principal Secretary. The ICT Department is a support function under the Directorate of Administrative & Support Services, not an independent directorate.
+
+## Policy Alignment
+
+TIISGS is designed to support Kenya's national digital transformation agenda:
+
+- **AU Agenda 2063** – Continental digital marketplace integration and cross-border e-government services
+- **Vision 2030** – Pillar 2: Economic & Social Transformation through e-government digitization
+- **National ICT Master Plan** – Guides Treasury ICT modernization in line with national standards
+- **Bottom-Up Economic Transformation Agenda (BETA)** – Digital economy pillar, aligning with 17,668 eCitizen services
+- **Data Protection Act 2019** – All user data handled with strict confidentiality
+
+## Government Service Standards (Kakamega County ICT Charter)
+
+TIISGS enforces published government SLAs:
+
+| Service | Target Time | Article Reference |
+|---------|-------------|-------------------|
+| User Support Request | 30 minutes | KB: Client Rights |
+| Email Account Creation | 30 minutes | KB: Email Provision |
+| Network Issue Diagnosis | Site-dependent (Tier A–D) | KB: Network Diagnosis |
+| Hardware Repair | 10 working days | KB: Equipment Repair |
+| Equipment Escalation (vendor) | 6 weeks | KB: Escalation SLA |
+| IFMIS Helpdesk (72-hr) | 72 hours (3 days) | KB: IFMIS Helpdesk |
+
+> These standards are embedded in ticket categories, AI knowledge base articles, and the notification engine.
+
+## External Dependencies & National Infrastructure
+
+Deployment considerations for distributed Treasury operations:
+- **Konza National Data Centre** – Recommended hosting for disaster recovery and data sovereignty
+- **Universal Service Fund (USF)** – Ensures connectivity for underserved areas
+- **100,000 km fiber backbone** – 20,000+ km already laid; Treasury offices prioritized
+- **1,491 public Wi-Fi hotspots** – Already installed nationwide; field officers can access TIISGS remotely
+- **1,450 digital hubs** – Planned across constituencies (274 operational as of 2024); Jitume Digital Hub integration ready
+- **eCitizen Platform** – 17,668 government services onboarded; future ticket correlation possible
+
+## AI Self-Care (Knowledge Base)
+
+Pre-loaded with **4-Level IFMIS Support Structure** (per IFMIS Helpdesk Process):
+- **Level 1:** Self-Help (clear cache, password reset, user manual)
+- **Level 2:** Senior Accountant Support (reconciliation, approvals)
+- **Level 3:** Helpdesk Ticket (72-hour SLA, email escalation)
+- **Level 4:** Vendor Support (Free Balance – 6-hour response for core system bugs)
+
+Covers real-world scenarios: IFMIS login, voucher reconciliation, certificate renewal, G-Pay issues, hardware repair walkthroughs, network diagnosis, digital hub connectivity, plus policy/legal context (Constitution, Vision 2030, Charter rights & obligations).
+
+## Security & Compliance (Government Context)
+
+- **PKI Integration:** Ready for Communications Authority of Kenya licensed Electronic Certification Service Providers (E-CSPs) for Critical Information Infrastructure
+- **Data Localization:** All government data must reside within Kenya; Konza Data Centre recommended
+- **Audit Readiness:** Immutable ticket and interaction logs for Auditor General compliance
+- **Confidentiality Pledge:** All ICT staff must adhere to government confidentiality standards per the ICT Service Charter
+
+## Installation & Setup
 
 | Role | Description | Access |
 |------|-------------|--------|
@@ -153,8 +210,9 @@ Users can authenticate with:
 - Standard email/password (for demo)
 - Government CA digital certificate (production mode)
 
+Supports two-factor via certificate + password.
+
 ```javascript
-// PKI login flow
 POST /api/auth/login-pki
 {
   "certificate_serial": "ABC123...",
@@ -164,46 +222,76 @@ POST /api/auth/login-pki
 
 ### 2. AI Self-Care (Knowledge Base)
 
-Pre-populated with 10+ troubleshooting articles for:
-- IFMIS connectivity
-- G-Pay performance
-- Digital certificate errors
-- Printer/network issues
-- Biometric reader problems
+**4-Level IFMIS Support Structure** – built from official IFMIS Helpdesk process:
+- **Level 1** – Self-Help resolution (clear cache, password reset, user manual)
+- **Level 2** – Senior Accountant Support (reconciliation, approvals)
+- **Level 3** – Helpdesk ticket protocol (72-hour SLA, required screenshot + error log)
+- **Level 4** – Vendor escalation (Free Balance, 6-hour response target)
 
-Knowledge Base is searchable and includes priority-based article ranking.
+Plus government-aligned KB: network diagnosis, hardware repair (10-day SLA), escalation procedures, constitutional rights, policy alignment (Vision 2030, AU Agenda 2063, BETA).
 
-### 3. Ticketed Queue & Dispatch
+**AI Assistant** on Dashboard consults the KB before creating tickets.
 
-**Automated workflow:**
-1. Officer creates ticket (with auto-categorization)
-2. Ticket enters queue based on priority
-3. System monitors queue every 30s
-4. Next available ICT Officer gets auto-assigned
-5. SLA countdown begins (configurable per category)
+### 3. Ticketed Queue & Automatic Dispatch
 
-**Ticket Status Lifecycle:**
-```
-open → assigned → in_progress → resolved → closed
-```
+- Automatic SLA calculation based on ticket category government standards
+- Queue monitoring every 30 seconds
+- Auto-assignment to next available ICT officer
+- Breach detection with escalation to supervisors
 
-### 4. Asset Management
+### 4. Asset Management with Service Charter Compliance
 
-Track hardware across departments:
-- Desktops, laptops, tablets
-- Printers, scanners, biometric readers
-- Network equipment (APs, VoIP phones)
-- UPS and power backup
+Asset types seeded with government hardware repair timelines:
+- Desktops/Laptops: 36-month lifecycle, 10-day repair SLA
+- Printers/Peripherals: 60-month lifecycle, 10-day repair
+- Network equipment: priority response based on tier (critical: 15 min)
 
-Maintenance logs and warranty tracking included.
+Maintenance logs track request → response → completion times against `sla_deadline`. Escalation triggers:
+- Workshop repair > 10 working days → Supervisor notification
+- Vendor escalation > 6 weeks → Director of Administration alert
 
-### 5. Reporting & Analytics
+### 5. Geographic Deployment & Offline Support
 
-Generate TTR reports by directorate:
-- Average resolution time
-- Open vs resolved tickets
-- Officer productivity metrics
-- SLA compliance tracking
+**Locations table** tracks Treasury offices, regional centers, and Jitume Digital Hubs:
+- Connectivity type (Fiber/Hotspot/VSAT)
+- USF-funded sites prioritized
+- Offline sync via IndexedDB for field officers in areas with poor connectivity
+- Sync timestamp tracking per location
+
+### 6. Reporting & Analytics
+
+Built-in reports:
+- **TTR by Directorate** – Against SLA targets
+- **ICT Officer Performance** – Tickets resolved, hours logged
+- **System Stats** – Open/closed ratios, priority breakdown
+- **Service Charter Compliance** – Green/Yellow/Red status vs published government standards
+
+### 7. Notifications & Escalation Engine
+
+Automatic notifications for:
+- SLA breaches (ticket overdue, maintenance delay)
+- Supervisor alerts when repair exceeds 10 days
+- Director escalation at 6-week mark
+- All stored in `notifications` table with read/unread state
+
+### 8. Client Rights & Obligations
+
+Every ticket creation page displays:
+- **Your Rights:** Timely service (per Constitution Art 47), confidentiality, redress
+- **Your Obligations:** Use equipment carefully, provide accurate info, treat staff courteously
+
+Required acknowledgment checkbox before submission (Government Service Charter principle).
+
+### 9. Strategic Alignment
+
+Roadmap mapped to national initiatives:
+- **Phase 1:** Konza National Data Centre deployment
+- **Phase 2:** BETA digital economy alignment
+- **Phase 3:** Connect to 1,491 Wi-Fi hotspots for field access
+- **Phase 4:** Leverage Konza Technopolis infrastructure
+- **Phase 5:** AI adoption per PS Tanui guidance
+
+## Installation & Setup
 
 ## API Documentation
 

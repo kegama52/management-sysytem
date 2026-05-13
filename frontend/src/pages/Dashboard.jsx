@@ -298,7 +298,48 @@ export default function Dashboard() {
             <div className="h-3 w-3 bg-green-500 rounded-full"></div>
           </div>
         </div>
-       </div>
+      </div>
+
+      {/* Government Service Standards */}
+      <div className="card">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Service Charter Standards</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
+          <div className="p-3 bg-blue-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">User Support</p>
+            <p className="text-lg font-bold text-blue-700">30 min</p>
+            <p className="text-xs text-gray-500">Initial response</p>
+          </div>
+          <div className="p-3 bg-green-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">Email Account</p>
+            <p className="text-lg font-bold text-green-700">30 min</p>
+            <p className="text-xs text-gray-500">Provisioning</p>
+          </div>
+          <div className="p-3 bg-yellow-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">Network Diag</p>
+            <p className="text-lg font-bold text-yellow-700">Site-dep</p>
+            <p className="text-xs text-gray-500">Depends on site</p>
+          </div>
+          <div className="p-3 bg-orange-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">HW Repair</p>
+            <p className="text-lg font-bold text-orange-700">10 d</p>
+            <p className="text-xs text-gray-500">Working days</p>
+          </div>
+          <div className="p-3 bg-red-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">Escalation</p>
+            <p className="text-lg font-bold text-red-700">6 wk</p>
+            <p className="text-xs text-gray-500">Vendor SLA</p>
+          </div>
+          <div className="p-3 bg-purple-50 rounded-lg">
+            <p className="text-xs text-gray-600 mb-1">IFMIS HD</p>
+            <p className="text-lg font-bold text-purple-700">72 h</p>
+            <p className="text-xs text-gray-500">Helpdesk</p>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          Standards based on Kakamega County ICT Service Charter, National Treasury guidelines, and IFMIS Helpdesk Process.
+          <Link to="/knowledge-base?topic=rights" className="text-blue-600 hover:underline ml-1">Know your rights</Link>
+        </p>
+      </div>
 
       {/* AI Assistant Panel */}
       {aiOpen && (
