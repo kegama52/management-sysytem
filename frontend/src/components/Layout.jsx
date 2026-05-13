@@ -8,7 +8,8 @@ import {
   BookOpenIcon,
   CubeIcon,
   QueueListIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline'
 
 export default function Layout() {
