@@ -20,8 +20,9 @@ import {
  */
 export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessing }) {
   const navigate = useNavigate();
-  const audioStreamRef = useRef(null);
+  audioStreamRef = useRef(null);
   const pendingTranscriptRef = useRef('');
+  const spokenResponseRef = useRef(''); // Track what we've already spoken to avoid repeats
 
   const {
     isListening,
@@ -44,22 +45,41 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
     analyser
   } = useVoice();
 
+  // Track last response to avoid duplicate TTS
+  useEffect(() => {
+    if (lastResponse && lastResponse !== spokenResponseRef.current) {
+      spokenResponseRef.current = lastResponse;
+    }
+  }, [lastResponse]);
+
   // Send transcript as message when user stops speaking
   useEffect(() => {
-    if (!isListening && transcript) {
-      // Debounce: Wait a moment before sending
+    if (!isListening && transcript && transcript !== pendingTranscriptRef.current) {
+      pendingTranscriptRef.current = transcript;
+      // Reset spoken response tracker for new turn
+      spokenResponseRef.current = '';
       const timer = setTimeout(() => {
-        onSendMessage(transcript);
-        pendingTranscriptRef.current = '';
+        if (transcript.trim()) {
+          onSendMessage(transcript);
+          pendingTranscriptRef.current = '';
+        }
       }, 1000);
       return () => clearTimeout(timer);
     }
   }, [isListening, transcript, onSendMessage]);
 
-  // Read AI responses aloud
+  // Read AI responses aloud + prevent feedback loop
   useEffect(() => {
-    if (lastResponse && voiceEnabled && !isProcessing && !isListening) {
-      // Extract clean text (remove markdown formatting for speech)
+    if (lastResponse && voiceEnabled && !isProcessing && lastResponse !== spokenResponseRef.current) {
+      // Mark as spoken to prevent duplicate TTS
+      spokenResponseRef.current = lastResponse;
+
+      // CRITICAL: Stop listening to prevent AI voice → microphone → AI responds again (infinite loop)
+      if (isListening) {
+        stopListening();
+      }
+
+      // Clean markdown formatting for speech
       const cleanText = lastResponse
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
         .replace(/\*(.*?)\*/g, '$1')     // Remove italic
@@ -69,17 +89,12 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
         .replace(/\*/g, '');              // Remove asterisks
 
       // Speak after a brief pause
-      setTimeout(() => speakText(cleanText), 300);
+      const timer = setTimeout(() => {
+        speakText(cleanText);
+      }, 600);
+      return () => clearTimeout(timer);
     }
-  }, [lastResponse, voiceEnabled, isProcessing, isListening, speakText]);
-
-  // Visual indicator when AI is speaking
-  useEffect(() => {
-    if (isSpeaking) {
-      // Could add visual effect here if needed
-      console.log('AI is speaking...');
-    }
-  }, [isSpeaking]);
+  }, [lastResponse, voiceEnabled, isProcessing, isListening, speakText, stopListening]);
 
   // Voice command handling
   useEffect(() => {
@@ -88,10 +103,7 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
     const cmds = {
       'stop listening': () => stopListening(),
       'stop speaking': () => cancelSpeech(),
-      'clear chat': () => {
-        // This should be handled by parent - we'll just clear local
-        setTranscript('');
-      },
+      'clear chat': () => setTranscript(''),
       'open ticket': () => navigate('/tickets/new'),
       'open dashboard': () => navigate('/dashboard'),
       'open knowledge base': () => navigate('/knowledge-base'),
@@ -228,7 +240,7 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
           {voiceEnabled ? <SpeakerWaveIcon className="h-4 w-4" /> : <SpeakerXMarkIcon className="h-4 w-4" />}
         </button>
 
-        {/* Main Microphone Button */}
+        {/* Main Microphone Button - disabled while AI is speaking */}
         <button
           onClick={handleMicClick}
           disabled={!voiceEnabled || isSpeaking}
@@ -244,6 +256,8 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
               ? `Error: ${error}`
               : isListening
               ? 'Click to stop listening'
+              : isSpeaking
+              ? 'AI is speaking... wait or click stop'
               : 'Click to speak'
           }
         >
@@ -317,12 +331,17 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
         {isListening ? (
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            Listening... (speak your question)
+            Listening... (speak now)
           </span>
         ) : isSpeaking ? (
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            Speaking... (AI is responding)
+            AI is speaking... (click stop to interrupt)
+          </span>
+        ) : voiceEnabled && transcript ? (
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            Press Enter or click mic to send
           </span>
         ) : voiceEnabled ? (
           <span>Click microphone to speak</span>
@@ -330,6 +349,13 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
           <span className="text-gray-400">Voice assistant disabled</span>
         )}
       </p>
+
+      {/* Feedback prevention notice */}
+      {isSpeaking && (
+        <p className="text-xs text-amber-600 mt-1">
+          💡 Microphone is paused while AI speaks to prevent feedback. Click mic to speak again after response.
+        </p>
+      )}
 
       {/* Voice Commands Help */}
       <div className="mt-2 text-xs text-gray-400">
