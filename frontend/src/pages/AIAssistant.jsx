@@ -21,7 +21,7 @@ export default function AIAssistantPage() {
   const [chatHistory, setChatHistory] = useState([]);
   const messagesEndRef = useRef(null);
 
-  const { voiceEnabled, speakText, cancelSpeech, isSpeaking } = useVoice();
+  const { voiceEnabled, language, isSpeaking, speakText, cancelSpeech } = useVoice();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
