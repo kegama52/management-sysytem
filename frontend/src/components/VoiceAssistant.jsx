@@ -58,19 +58,28 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
 
   // Read AI responses aloud
   useEffect(() => {
-    if (lastResponse && voiceEnabled && !isProcessing) {
+    if (lastResponse && voiceEnabled && !isProcessing && !isListening) {
       // Extract clean text (remove markdown formatting for speech)
       const cleanText = lastResponse
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
         .replace(/\*(.*?)\*/g, '$1')     // Remove italic
         .replace(/`(.*?)`/g, '$1')       // Remove code
         .replace(/\n/g, '. ')             // Replace newlines with pauses
-        .replace(/•/g, '. ');             // Replace bullets
+        .replace(/•/g, '. ')              // Replace bullets
+        .replace(/\*/g, '');              // Remove asterisks
 
-      // React after a brief pause
-      setTimeout(() => speakText(cleanText), 500);
+      // Speak after a brief pause
+      setTimeout(() => speakText(cleanText), 300);
     }
-  }, [lastResponse, voiceEnabled, isProcessing, speakText]);
+  }, [lastResponse, voiceEnabled, isProcessing, isListening, speakText]);
+
+  // Visual indicator when AI is speaking
+  useEffect(() => {
+    if (isSpeaking) {
+      // Could add visual effect here if needed
+      console.log('AI is speaking...');
+    }
+  }, [isSpeaking]);
 
   // Voice command handling
   useEffect(() => {

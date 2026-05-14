@@ -8,7 +8,8 @@ import {
   XMarkIcon,
   PaperAirplaneIcon,
   LightBulbIcon,
-  BookOpenIcon
+  BookOpenIcon,
+  SpeakerWaveIcon
 } from '@heroicons/react/24/outline'
 
 export default function AIAssistantPage() {
@@ -20,14 +21,38 @@ export default function AIAssistantPage() {
   const [chatHistory, setChatHistory] = useState([]);
   const messagesEndRef = useRef(null);
 
-  const { voiceEnabled, language } = useVoice();
+  const { voiceEnabled, speakText, cancelSpeech, isSpeaking } = useVoice();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory, aiSuggestions]);
 
+  // Auto-speak AI responses when they arrive (if voice enabled)
+  useEffect(() => {
+    if (aiMessage && !aiLoading && voiceEnabled && !isSpeaking) {
+      // Clean markdown for speech
+      const cleanText = aiMessage
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+        .replace(/\*(.*?)\*/g, '$1')     // Remove italic
+        .replace(/`(.*?)`/g, '$1')       // Remove code
+        .replace(/\n/g, '. ')             // Replace newlines with pauses
+        .replace(/•/g, '. ')              // Replace bullets
+        .replace(/\*/g, '');              // Remove remaining asterisks
+
+      // Speak after brief pause
+      const timer = setTimeout(() => {
+        speakText(cleanText);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [aiMessage, aiLoading, voiceEnabled, isSpeaking, speakText]);
+
+  // Stop speaking when new user message is sent
   const handleSendMessage = async (text) => {
     if (!text.trim()) return;
+
+    // Cancel any ongoing TTS
+    cancelSpeech();
 
     const userQuery = text.trim();
     setAiLoading(true);

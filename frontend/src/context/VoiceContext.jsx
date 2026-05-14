@@ -68,12 +68,12 @@ export function VoiceProvider({ children }) {
 
   // Initialize speech recognition
   const initRecognition = useCallback(() => {
-    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      setError('Speech recognition not supported in this browser');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setError('Speech recognition not supported. Please use Chrome, Edge, or Safari.');
       return null;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
     recognition.continuous = true;

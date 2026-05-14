@@ -247,58 +247,128 @@ router.post('/chat', async (req, res) => {
             return res.status(400).json({ error: 'Query is required' });
         }
 
-        const cleanQuery = query.trim();
+        const cleanQuery = query.trim().toLowerCase();
         if (cleanQuery.length === 0) {
             return res.status(400).json({ error: 'Query cannot be empty' });
         }
 
-        const searchTerm = `%${cleanQuery}%`;
+        let message = '';
+        let suggestions = [];
+        let faqs = [];
+        let shouldCreateTicket = false;
+        let responseType = 'kb_search'; // 'greeting', 'help', 'kb_search', 'ticket_creation'
 
-        const { rows: kbResults } = await req.pool.query(`
-            SELECT kb.id, kb.title, kb.content, kbc.name as category_name,
-                   kb.tags, kb.priority_level, kb.view_count, kb.helpful_count
-            FROM knowledge_base kb
-            LEFT JOIN kb_categories kbc ON kb.category_id = kbc.id
-            WHERE kb.is_active = true
-              AND (
-                  LOWER(kb.title) LIKE LOWER($1)
-                  OR LOWER(kb.content) LIKE LOWER($1)
-              )
-            ORDER BY kb.priority_level ASC, kb.view_count DESC
-            LIMIT 5
-        `, [searchTerm]);
+        // ==================== CONVERSATIONAL PATTERNS ====================
+        // Greetings & social chat
+        const greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening', 'habari', 'mambo', 'hujambo', 'salama'];
+        const helpPatterns = ['help', 'assist', 'support', 'what can you do', 'how do you work', 'show me', 'guide me'];
+        const thanks = ['thank', 'thanks', 'asanti', 'shukrani'];
 
-        const { rows: faqResults } = await req.pool.query(`
-            SELECT kb.id, kb.title, kb.issue_type, kbc.name as category_name
-            FROM knowledge_base kb
-            LEFT JOIN kb_categories kbc ON kb.category_id = kbc.id
-            WHERE kb.is_active = true
-              AND kb.priority_level <= 2
-              AND (LOWER(kb.title) LIKE LOWER($1) OR LOWER(kb.content) LIKE LOWER($1))
-            ORDER BY kb.view_count DESC
-            LIMIT 3
-        `, [searchTerm]);
+        if (greetings.some(g => cleanQuery.includes(g))) {
+            // Friendly greeting response
+            const greetingResponses = [
+                "Hello! I'm TIISGS, your ICT support assistant. How can I help you today? You can ask me about IFMIS, G-Pay, printer issues, or any ICT service.",
+                "Habari! Karibu kwenye mfumo wa msaada wa ICT. Niko hapa kukusaidia. Unaweza kuniuliza kuhusu IFMIS, G-Pay, au matatizo mengine ya kiteknolojia.",
+                "Hi there! I'm your virtual ICT officer. Tell me what issue you're facing, and I'll check the knowledge base for solutions."
+            ];
+            message = greetingResponses[Math.floor(Math.random() * greetingResponses.length)];
+            responseType = 'greeting';
+            shouldCreateTicket = false;
+        }
+        else if (helpPatterns.some(h => cleanQuery.includes(h))) {
+            message = `I can help you with:\n\n• IFMIS errors and login issues\n• G-Pay payment problems\n• Printer and scanner troubleshooting\n• Network connectivity\n• Digital certificate renewal\n• Hardware repair requests\n\nJust describe your issue, and I'll search our knowledge base. If I can't resolve it, I'll help you create a ticket.`;
+            responseType = 'help';
+            shouldCreateTicket = false;
+        }
+        else if (thanks.some(t => cleanQuery.includes(t))) {
+            message = "You're welcome! If you need further assistance, I'm here. Otherwise, feel free to create a ticket if your issue persists. Have a great day!";
+            responseType = 'greeting';
+            shouldCreateTicket = false;
+        }
+        else if (cleanQuery.includes('create ticket') || cleanQuery.includes('new ticket') || cleanQuery.includes('open ticket')) {
+            message = "I'd be happy to help you create a support ticket. Click the 'New Ticket' button in the sidebar or say 'Open ticket' to start. Please provide:\n\n1. A clear title\n2. Detailed description of the issue\n3. Category selection\n\nOr simply say 'Open ticket' and I'll navigate you there.";
+            responseType = 'ticket_creation';
+            shouldCreateTicket = true;
+        }
+        else {
+            // ==================== KNOWLEDGE BASE SEARCH ====================
+            const searchTerm = `%${cleanQuery}%`;
 
-        const suggestions = kbResults.map(kb => ({
-            id: kb.id,
-            title: kb.title,
-            content: kb.content,
-            category: kb.category_name,
-            tags: kb.tags,
-            priorityLevel: kb.priority_level,
-            relevance: Math.min(100, (kb.view_count + kb.helpful_count + 1) * 2)
-        }));
+            const { rows: kbResults } = await req.pool.query(`
+                SELECT kb.id, kb.title, kb.content, kbc.name as category_name,
+                       kb.tags, kb.priority_level, kb.view_count, kb.helpful_count
+                FROM knowledge_base kb
+                LEFT JOIN kb_categories kbc ON kb.category_id = kbc.id
+                WHERE kb.is_active = true
+                  AND (
+                      LOWER(kb.title) LIKE LOWER($1)
+                      OR LOWER(kb.content) LIKE LOWER($1)
+                      OR LOWER(kb.tags::text) LIKE LOWER($1)
+                  )
+                ORDER BY 
+                    CASE 
+                        WHEN LOWER(kb.title) LIKE LOWER($1) THEN 1
+                        WHEN LOWER(kb.content) LIKE LOWER($1) THEN 2
+                        ELSE 3
+                    END,
+                    kb.priority_level ASC,
+                    kb.view_count DESC
+                LIMIT 5
+            `, [searchTerm]);
 
-        const faqs = faqResults.map(faq => ({
-            id: faq.id,
-            title: faq.title,
-            issueType: faq.issue_type,
-            category: faq.category_name
-        }));
+            const { rows: faqResults } = await req.pool.query(`
+                SELECT kb.id, kb.title, kb.issue_type, kbc.name as category_name
+                FROM knowledge_base kb
+                LEFT JOIN kb_categories kbc ON kb.category_id = kbc.id
+                WHERE kb.is_active = true
+                  AND kb.priority_level <= 2
+                  AND (LOWER(kb.title) LIKE LOWER($1) OR LOWER(kb.content) LIKE LOWER($1))
+                ORDER BY kb.view_count DESC
+                LIMIT 3
+            `, [searchTerm]);
 
-        const shouldCreateTicket = suggestions.length === 0 ||
-            (suggestions.length > 0 && suggestions[0].priorityLevel >= 4);
+            suggestions = kbResults.map(kb => ({
+                id: kb.id,
+                title: kb.title,
+                content: kb.content,
+                category: kb.category_name,
+                tags: kb.tags,
+                priorityLevel: kb.priority_level,
+                relevance: Math.min(100, (kb.view_count + kb.helpful_count + 1) * 2)
+            }));
 
+            faqs = faqResults.map(faq => ({
+                id: faq.id,
+                title: faq.title,
+                issueType: faq.issue_type,
+                category: faq.category_name
+            }));
+
+            shouldCreateTicket = suggestions.length === 0 ||
+                (suggestions.length > 0 && suggestions[0].priorityLevel >= 4);
+
+            // Build conversational response
+            if (suggestions.length > 0) {
+                const top = suggestions[0];
+                message = `I found ${suggestions.length} relevant solution(s) in our knowledge base.\n\n**Top suggestion: ${top.title}**\n\n${top.content.substring(0, 300)}${top.content.length > 300 ? '...' : ''}\n\nWould you like me to:\n• Read more details aloud?\n• Create a ticket if this doesn't help?\n• Search for something else?`;
+                responseType = 'kb_results';
+            } else {
+                // No KB match - try to understand intent
+                if (cleanQuery.includes('ifmis') || cleanQuery.includes('login') || cleanQuery.includes('password')) {
+                    message = "I couldn't find an exact match for your IFMIS issue. Since IFMIS is critical, I recommend creating a ticket immediately for the IFMIS Helpdesk (72-hour SLA). Would you like me to help you create a ticket?";
+                } else if (cleanQuery.includes('printer') || cleanQuery.includes('print')) {
+                    message = "For printer issues, try these self-help steps first:\n\n1. Check if printer is powered on and connected to network\n2. Clear print queue\n3. Restart Print Spooler service\n4. Verify IP address hasn't changed\n\nIf the problem persists after 10 minutes, create a ticket and we'll dispatch an ICT officer within 4 hours (response SLA).";
+                } else if (cleanQuery.includes('network') || cleanQuery.includes('wifi') || cleanQuery.includes('internet')) {
+                    message = "Network issues are prioritized based on impact:\n\n• IFMIS/G-Pay down → 15-minute response\n• Department systems → 30-minute response\n• General workstation → 2-hour response\n• Constituency office (via hotspot) → Next day\n\nPlease describe your location and which systems are affected.";
+                } else {
+                    message = "I'm sorry, I couldn't find a matching solution in our knowledge base. However, I can help you create a support ticket. Our ICT team will respond based on the service standards:\n\n• User support: within 30 minutes\n• Email account: within 30 minutes\n• Hardware repair: within 10 working days\n• Major escalation: within 6 weeks\n\nWould you like me to create a ticket for you?";
+                }
+                shouldCreateTicket = true;
+                responseType = 'no_match';
+            }
+        }
+
+        // Log interaction
         (async () => {
             try {
                 const suggestedSolution = suggestions.length > 0 ? suggestions[0].content : null;
@@ -307,8 +377,8 @@ router.post('/chat', async (req, res) => {
                 await req.pool.query(`
                     INSERT INTO ai_interactions (
                         id, user_id, query_text, suggested_solution,
-                        kb_article_id, resolved, ticket_created, interaction_time
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+                        kb_article_id, resolved, ticket_created, interaction_time, metadata
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, $8)
                 `, [
                     require('uuid').v4(),
                     userId || null,
@@ -316,7 +386,8 @@ router.post('/chat', async (req, res) => {
                     suggestedSolution,
                     kbArticleId,
                     false,
-                    null
+                    null,
+                    JSON.stringify({ responseType, suggestionCount: suggestions.length })
                 ]);
             } catch (logErr) {
                 console.error('Failed to log interaction:', logErr.message);
@@ -328,9 +399,9 @@ router.post('/chat', async (req, res) => {
             suggestions,
             faqs,
             shouldCreateTicket,
-            message: shouldCreateTicket
-                ? 'No exact match found. Consider creating a ticket for further assistance.'
-                : `Found ${suggestions.length} relevant solution(s). Review them below.`
+            message,
+            responseType,
+            spokeResponse: true // Flag to indicate TTS should play
         });
     } catch (err) {
         console.error('AI chat error:', err);
