@@ -6,6 +6,7 @@ import { VoiceProvider } from './context/VoiceContext'
 
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import TicketList from './pages/Tickets'
 import TicketDetail from './pages/TicketDetail'
@@ -46,6 +47,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route
                 path="/"
                 element={
@@ -58,9 +60,9 @@ function App() {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="tickets" element={<TicketList />} />
                 <Route path="tickets/new" element={<NewTicket />} />
-              <Route path="tickets/:id" element={<TicketDetail />} />
-              <Route path="knowledge-base" element={<KnowledgeBase />} />
-              <Route path="ai-assistant" element={<AIAssistant />} />
+                <Route path="tickets/:id" element={<TicketDetail />} />
+                <Route path="knowledge-base" element={<KnowledgeBase />} />
+                <Route path="ai-assistant" element={<AIAssistant />} />
               <Route
                 path="ict-queue"
                 element={

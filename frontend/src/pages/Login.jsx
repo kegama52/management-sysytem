@@ -62,10 +62,6 @@ export default function Login() {
             <p className="text-sm text-gray-600">Access your ICT support account</p>
           </div>
 
-          <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded mb-4 text-center">
-            Demo credentials: <strong>kevohkevi110@gmail.com</strong> / <strong>Password123</strong>
-          </p>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="form-label">Email</label>
@@ -89,6 +85,12 @@ export default function Login() {
                 placeholder="Enter your password"
                 required
               />
+            </div>
+
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">
+                Forgot Password?
+              </Link>
             </div>
 
             <button

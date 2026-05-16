@@ -295,7 +295,8 @@ export function VoiceProvider({ children }) {
     speakText,
     cancelSpeech,
     detectWakeWord,
-    analyser: analyserRef.current
+    analyser: analyserRef.current,
+    audioStream: streamRef.current
   };
 
   return (

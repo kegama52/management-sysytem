@@ -20,7 +20,6 @@ import {
  */
 export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessing }) {
   const navigate = useNavigate();
-  audioStreamRef = useRef(null);
   const pendingTranscriptRef = useRef('');
   const spokenResponseRef = useRef(''); // Track what we've already spoken to avoid repeats
 
@@ -28,6 +27,7 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
     isListening,
     isSpeaking,
     transcript,
+    setTranscript,
     voices,
     selectedVoice,
     setSelectedVoice,
@@ -42,7 +42,8 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
     speakText,
     cancelSpeech,
     detectWakeWord,
-    analyser
+    analyser,
+    audioStream
   } = useVoice();
 
   // Track last response to avoid duplicate TTS
@@ -322,7 +323,7 @@ export default function VoiceAssistant({ onSendMessage, lastResponse, isProcessi
       {isListening && (
         <VoiceWaveform
           isActive={isListening}
-          audioStream={audioStreamRef.current || null}
+          audioStream={audioStream}
         />
       )}
 

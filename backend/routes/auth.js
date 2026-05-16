@@ -295,4 +295,35 @@ router.post('/register', async (req, res) => {
     }
 });
 
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const { rows } = await req.pool.query(
+            'SELECT id, email FROM users WHERE email = $1 AND is_active = true',
+            [email]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const resetToken = uuidv4();
+        const expiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+        await req.pool.query(
+            'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE id = $3',
+            [resetToken, expiry, rows[0].id]
+        );
+
+        res.json({ message: 'Password reset instructions sent to your email' });
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;

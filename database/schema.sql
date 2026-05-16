@@ -69,6 +69,8 @@ CREATE TABLE users (
     unit_id UUID REFERENCES units(id) ON DELETE SET NULL,
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP,
+    reset_token VARCHAR(255),
+    reset_token_expiry TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -528,7 +530,8 @@ INSERT INTO kb_categories (code, name) VALUES
 ('HW-PRINT', 'Printers & Scanners'),
 ('SEC-CERT', 'Security & Certificates'),
 ('SOFT', 'Software Applications'),
-('PERIPH', 'Peripherals');
+('PERIPH', 'Peripherals'),
+('WINDOWS', 'Windows Operating System Issues');
 
 -- ============================================
 -- INSERT SAMPLE KNOWLEDGE BASE ARTICLES
