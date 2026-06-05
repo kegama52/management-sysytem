@@ -202,6 +202,13 @@ Covers real-world scenarios: IFMIS login, voucher reconciliation, certificate re
 | `officer` | Regular Treasury staff | Create/view own tickets, KB |
 | `auditor` | Compliance/audit | Read-only reports |
 
+## Testing & CI/CD
+
+- Automated E2E testing with Cypress for the frontend application.
+- CI pipeline uses GitHub Actions to lint, build, and run Cypress tests on every push and pull request.
+- A `Jenkinsfile` is included for Jenkins-based automation and deployment validation.
+- Defects are tracked through GitHub Issues and test results are surfaced via CI status checks.
+
 ## Key Features
 
 ### 1. PKI Authentication
